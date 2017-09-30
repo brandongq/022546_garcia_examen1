@@ -17,7 +17,7 @@ import android.widget.TextView;
 public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
 
     public CustomerAdapter (Context context) {
-        super(context, R.layout.customer_info, R.id.lblPosition);
+        super(context, R.layout.customer_info, R.id.lblName);
     }
 
     @NonNull
@@ -25,14 +25,18 @@ public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
     public View getView(int position, @Nullable View convertView, @NonNull final ViewGroup parent) {
         final View oView = super.getView(position, convertView, parent);
 
-        TextView txtViewPosition = (TextView) oView.findViewById(R.id.lblPosition);
         TextView txtViewName = (TextView) oView.findViewById(R.id.lblName);
+        //TextView txtViewPosition = (TextView) oView.findViewById(R.id.lblPosition);
         TextView txtViewOperations = (TextView) oView.findViewById(R.id.lblOperations);
 
         CustomerInfo oCustomer = this.getItem(position);
 
-        txtViewPosition.setText(oCustomer.getPosition() + "");
         txtViewName.setText(oCustomer.getName());
+        /*if (oCustomer.getPosition() == 0)
+            txtViewPosition.setText("N/A");
+        else
+            txtViewPosition.setText(oCustomer.getPosition() + "");
+        */
         txtViewOperations.setText(oCustomer.getOperations() + "");
 
         return oView;
