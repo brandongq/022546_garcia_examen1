@@ -4,11 +4,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ListView;
 
+import com.example.brandon.banpatito2.Models.Customer;
+import com.example.brandon.banpatito2.Models.Visit;
+
 import java.util.ArrayList;
 
 public class ArrangedActivity extends AppCompatActivity {
 
-    CustomerAdapter oCustomerAdapter;
+    VisitAdapter oVisitAdapter;
     ListView oListView;
 
     @Override
@@ -17,23 +20,23 @@ public class ArrangedActivity extends AppCompatActivity {
         setContentView(R.layout.activity_arranged);
 
         oListView = (ListView) findViewById(R.id.lvArranged);
-        oCustomerAdapter = new CustomerAdapter(this);
-        oListView.setAdapter(oCustomerAdapter);
+        oVisitAdapter = new VisitAdapter(this);
+        oListView.setAdapter(oVisitAdapter);
 
-        ArrayList<CustomerInfo> customers  = getIntent().getParcelableArrayListExtra("data");
+        ArrayList<Visit> visits  = getIntent().getParcelableArrayListExtra("data");
 
-        displayQueue(customers);
+        displayQueue(visits);
     }
 
 
-    private void displayQueue(ArrayList<CustomerInfo> listCustomers)
+    private void displayQueue(ArrayList<Visit> listVisits)
     {
-        oCustomerAdapter.clear();
+        oVisitAdapter.clear();
 
-        for (CustomerInfo oCustomer : listCustomers){
-            oCustomerAdapter.add(oCustomer);
+        for (Visit oVisit : listVisits){
+            oVisitAdapter.add(oVisit);
         }
-        oCustomerAdapter.notifyDataSetChanged();
+        oVisitAdapter.notifyDataSetChanged();
     }
 }
 

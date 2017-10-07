@@ -10,19 +10,31 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.brandon.banpatito2.Models.Customer;
+import com.example.brandon.banpatito2.Models.Visit;
 import com.example.brandon.banpatito2.Utils.CustomerHelper;
+import com.example.brandon.banpatito2.Utils.VisitHelper;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayList<CustomerInfo> customers = new ArrayList<CustomerInfo>();
+    ArrayList<Customer> customers = new ArrayList<>();
+    ArrayList<Visit> visits = new ArrayList<>();
     CustomerAdapter oCustomerAdapter;
+    VisitAdapter oVisitAdapter;
     ListView oListView;
     public static final int RETURN_CODE=1;
+    VisitHelper oVisitHelper = new VisitHelper(this);
     CustomerHelper oCustomerHelper = new CustomerHelper(this);
+    Date date;
+    DateFormat dateFormatTime = new SimpleDateFormat("HHmmss");
+    DateFormat dateFormatDay = new SimpleDateFormat("yyyyMMdd");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,55 +45,82 @@ public class MainActivity extends AppCompatActivity {
         Button btnCalculateQueue = (Button) findViewById(R.id.btnCalculateQueue);
 
         oListView = (ListView) findViewById(R.id.lvCustomers);
-        oCustomerAdapter = new CustomerAdapter(this);
-        oListView.setAdapter(oCustomerAdapter);
+        //oCustomerAdapter = new CustomerAdapter(this);
+        oVisitAdapter = new VisitAdapter(this);
+        oListView.setAdapter(oVisitAdapter);
 
         oCustomerHelper.open();
         customers = oCustomerHelper.getAllCustomers();
         oCustomerHelper.close();
-        displayQueue(customers);
+
+        oVisitHelper.open();
+        date = new Date();
+        visits = oVisitHelper.getVisitsOfToday(dateFormatDay.format(date));
+        oVisitHelper.close();
+
+        displayQueue(visits);
 
         btnAddCustomer.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
+                TextView tvCustomerId = (TextView) findViewById(R.id.tbCustomerID);
                 TextView tvName = (TextView) findViewById(R.id.tbCustomerName);
                 TextView tvOperations = (TextView) findViewById(R.id.tbOperations);
 
+                String customerId = tvCustomerId.getText().toString();
                 String name = tvName.getText().toString();
                 String operations = tvOperations.getText().toString();
 
-                if(name.isEmpty())
+                if(customerId.isEmpty() || !tryParseInt(customerId))
+                    Toast.makeText(getApplicationContext(), "Enter A Valid ID", Toast.LENGTH_LONG).show();
+                else if(name.isEmpty())
                     Toast.makeText(getApplicationContext(), "Enter A Valid Name", Toast.LENGTH_LONG).show();
-                else if (operations.equals("") || !tryParseInt(operations)) {
+                else if (operations.isEmpty() || !tryParseInt(operations))
                     Toast.makeText(getApplicationContext(), "Invalid Operation Amount", Toast.LENGTH_LONG).show();
-                }
+                else if (Integer.parseInt(customerId) <= 0)
+                    Toast.makeText(getApplicationContext(), "The ID Must Be Greater Than 0", Toast.LENGTH_LONG).show();
                 else if (Integer.parseInt(operations) <= 0)
                     Toast.makeText(getApplicationContext(), "Operations Must Be 1 Or Greater", Toast.LENGTH_LONG).show();
-                else{
-                    oCustomerHelper.open();
-                    CustomerInfo customer = oCustomerHelper.addCustomer(name,Integer.parseInt(operations),0);
-                    oCustomerHelper.close();
-                    customers.add(customer);
-                    Toast.makeText(getApplicationContext(), name + " Added", Toast.LENGTH_SHORT).show();
-                    displayQueue(customers);
+                else {
+                    int customerIdInt = Integer.parseInt(customerId);
+                    int operationsInt = Integer.parseInt(operations);
+
+                    if (!customerExists(customerIdInt)) {
+                        oCustomerHelper.open();
+                        Customer customer = oCustomerHelper.addCustomer(customerIdInt, name);
+                        oCustomerHelper.close();
+                        customers.add(customer);
+                        Toast.makeText(getApplicationContext(), "Customer " + name + " added", Toast.LENGTH_SHORT).show();
+                    }
+
+                    oVisitHelper.open();
+                    date = new Date();
+                    String dateStr = dateFormatDay.format(date);
+                    String timeStr = dateFormatTime.format(date);
+                    Visit visit = oVisitHelper.addVisit(operationsInt, 0, dateStr, timeStr, customerIdInt);
+                    oVisitHelper.close();
+                    visits.add(visit);
+                    Toast.makeText(getApplicationContext(), "Visit registered", Toast.LENGTH_SHORT).show();
+
+                    displayQueue(visits);
+                    tvCustomerId.setText("");
                     tvName.setText("");
                     tvOperations.setText("");
                     tvName.requestFocus();
                 }
-
             }
         });
 
         oListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                CustomerInfo customer = customers.get(i);
-                oCustomerAdapter.remove(customer);
-                oCustomerHelper.open();
-                oCustomerHelper.deleteCustomer(customer.getId());
-                oCustomerHelper.close();
-                customers.remove(i);
-                oCustomerAdapter.notifyDataSetChanged();
+                Visit visit = visits.get(i);
+                oVisitAdapter.remove(visit);
+                oVisitAdapter.notifyDataSetChanged();
+                oVisitHelper.open();
+                oVisitHelper.deleteVisit(visit.getId());
+                oVisitHelper.close();
+                visits.remove(i);
             }
         });
 
@@ -100,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    boolean tryParseInt(String value) {
+    private boolean tryParseInt(String value) {
         try {
             Integer.parseInt(value);
             return true;
@@ -109,13 +148,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void displayQueue(ArrayList<CustomerInfo> listCustomers) {
-        oCustomerAdapter.clear();
+    private void displayQueue(ArrayList<Visit> listVisits) {
+        oVisitAdapter.clear();
 
-        for (CustomerInfo oCustomer : listCustomers){
-            oCustomerAdapter.add(oCustomer);
+        for (Visit oVisit : listVisits){
+            oVisitAdapter.add(oVisit);
         }
-        oCustomerAdapter.notifyDataSetChanged();
+        oVisitAdapter.notifyDataSetChanged();
+    }
+
+    private boolean customerExists (int id)
+    {
+        boolean result = false;
+        for (int i = 0; i < customers.size(); i++){
+            if (customers.get(i).getId() == id){
+                result = true;
+                break;
+            }
+        }
+        return  result;
     }
 
     @Override
@@ -125,27 +176,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private ArrayList<CustomerInfo> arrangeQueue()
+    private ArrayList<Visit> arrangeQueue()
     {
-        ArrayList<CustomerInfo> arrangedCustomers = new ArrayList<CustomerInfo>();
-        int totalCustomers = customers.size();
+        ArrayList<Visit> arrangedCustomers = new ArrayList<>();
+        int totalCustomers = visits.size();
         int counter = totalCustomers;
         int i = 0;
         int position = 1;
         while (counter > 0) {
-            CustomerInfo oCustomer = new CustomerInfo(
-                    customers.get(i).getName(),
-                    customers.get(i).getOperations()
+            Visit oVisit = new Visit(
+                    visits.get(i).getId(),
+                    visits.get(i).getOperations(),
+                    visits.get(i).getPosition(),
+                    visits.get(i).getVisitDate(),
+                    visits.get(i).getVisitTime(),
+                    visits.get(i).getCustomerId()
             );
-            if (oCustomer.getOperations() > 0) {
-                oCustomer.setPosition(position);
-                oCustomer.setOperations(oCustomer.getOperations() - 1);
-                arrangedCustomers.add(oCustomer);
-                if(oCustomer.getOperations() == 0)
+            if (oVisit.getOperations() > 0) {
+                oVisit.setPosition(position);
+                oVisit.setOperations(oVisit.getOperations() - 1);
+                arrangedCustomers.add(oVisit);
+                if(oVisit.getOperations() == 0)
                     counter--;
                 position++;
             }
-            customers.set(i, oCustomer);
+            visits.set(i, oVisit);
             if(i == totalCustomers-1)
                 i = 0;
             else

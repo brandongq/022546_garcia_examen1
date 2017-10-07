@@ -10,11 +10,13 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.brandon.banpatito2.Models.Customer;
+
 /**
  * Created by Brandon on 08-Sep-17.
  */
 
-public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
+public class CustomerAdapter extends ArrayAdapter<Customer> {
 
     public CustomerAdapter (Context context) {
         super(context, R.layout.customer_info, R.id.lblName);
@@ -29,7 +31,7 @@ public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
         //TextView txtViewPosition = (TextView) oView.findViewById(R.id.lblPosition);
         TextView txtViewOperations = (TextView) oView.findViewById(R.id.lblOperations);
 
-        CustomerInfo oCustomer = this.getItem(position);
+        Customer oCustomer = this.getItem(position);
 
         txtViewName.setText(oCustomer.getName());
         /*if (oCustomer.getPosition() == 0)
@@ -37,7 +39,8 @@ public class CustomerAdapter extends ArrayAdapter<CustomerInfo> {
         else
             txtViewPosition.setText(oCustomer.getPosition() + "");
         */
-        txtViewOperations.setText(oCustomer.getOperations() + "");
+        //txtViewOperations.setText(oCustomer.getOperations() + "");
+        txtViewOperations.setText("Still working!");
 
         return oView;
     }

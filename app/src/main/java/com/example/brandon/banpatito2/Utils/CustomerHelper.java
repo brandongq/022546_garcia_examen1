@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.example.brandon.banpatito2.CustomerInfo;
+import com.example.brandon.banpatito2.Models.Customer;
 
 import java.util.ArrayList;
 
@@ -19,13 +19,11 @@ public class CustomerHelper {
     private DBUtils dbHelper;
     private SQLiteDatabase database;
     private String[] CUSTOMERS_TABLE_COLUMNS = {
-        DBUtils.CUSTOMER_ID,
-        DBUtils.CUSTOMER_NAME,
-        DBUtils.CUSTOMER_OPERATIONS,
-        DBUtils.CUSTOMER_POSITION
+            DBUtils.CUSTOMER_ID,
+            DBUtils.CUSTOMER_NAME
     };
 
-    public CustomerHelper(Context context){
+    public CustomerHelper(Context context) {
         dbHelper = new DBUtils(context);
 
     }
@@ -34,16 +32,16 @@ public class CustomerHelper {
         database = dbHelper.getWritableDatabase();
     }
 
-    public void close(){
+    public void close() {
         dbHelper.close();
     }
 
-    public ArrayList<CustomerInfo> getAllCustomers () {
-        ArrayList<CustomerInfo> listCustomers = new ArrayList<>();
-        Cursor cursor = database.query(DBUtils.CUSTOMER_TABLE_NAME,CUSTOMERS_TABLE_COLUMNS, null, null, null, null, null);
+    public ArrayList<Customer> getAllCustomers() {
+        ArrayList<Customer> listCustomers = new ArrayList<>();
+        Cursor cursor = database.query(DBUtils.CUSTOMER_TABLE_NAME, CUSTOMERS_TABLE_COLUMNS, null, null, null, null, null);
 
         cursor.moveToFirst();
-        while (!cursor.isAfterLast()){
+        while (!cursor.isAfterLast()) {
             listCustomers.add(parseCustomer(cursor));
             cursor.moveToNext();
         }
@@ -51,34 +49,42 @@ public class CustomerHelper {
         return listCustomers;
     }
 
-    private CustomerInfo parseCustomer(Cursor cursor){
-        CustomerInfo oCustomer = new CustomerInfo(cursor.getInt(cursor.getColumnIndex(DBUtils.CUSTOMER_ID)));
-        oCustomer.setName(cursor.getString(cursor.getColumnIndex(DBUtils.CUSTOMER_NAME)));
-        oCustomer.setOperations(cursor.getInt(cursor.getColumnIndex(DBUtils.CUSTOMER_OPERATIONS)));
-        oCustomer.setPosition(cursor.getInt(cursor.getColumnIndex(DBUtils.CUSTOMER_POSITION)));
-        return  oCustomer;
-    }
-
-    public CustomerInfo addCustomer(String name, int operations, int position){
-        ContentValues values = new ContentValues();
-        values.put(DBUtils.CUSTOMER_NAME,name);
-        values.put(DBUtils.CUSTOMER_OPERATIONS,operations);
-        values.put(DBUtils.CUSTOMER_POSITION,position);
-
-        long customerId = database.insert(DBUtils.CUSTOMER_TABLE_NAME, null, values);
-
-        Cursor cursor=database.query(DBUtils.CUSTOMER_TABLE_NAME,
-                CUSTOMERS_TABLE_COLUMNS,
-                DBUtils.CUSTOMER_ID + " = " + customerId,
+    public String getCustomerName(int id){
+        Cursor cursor = database.query(DBUtils.CUSTOMER_TABLE_NAME,
+                new String[] {DBUtils.CUSTOMER_NAME},
+                DBUtils.CUSTOMER_ID+ " = " + id,
                 null, null, null, null);
         cursor.moveToFirst();
-        CustomerInfo customer = parseCustomer(cursor);
+        String name = cursor.getString(cursor.getColumnIndex(DBUtils.CUSTOMER_NAME));
+        cursor.close();
+        return name;
+    }
+
+    private Customer parseCustomer(Cursor cursor) {
+        Customer oCustomer = new Customer(cursor.getInt(cursor.getColumnIndex(DBUtils.CUSTOMER_ID)));
+        oCustomer.setName(cursor.getString(cursor.getColumnIndex(DBUtils.CUSTOMER_NAME)));
+        return oCustomer;
+    }
+
+    public Customer addCustomer(int id, String name) {
+        ContentValues values = new ContentValues();
+        values.put(DBUtils.CUSTOMER_ID, id);
+        values.put(DBUtils.CUSTOMER_NAME, name);
+
+        database.insert(DBUtils.CUSTOMER_TABLE_NAME, null, values);
+
+        Cursor cursor = database.query(DBUtils.CUSTOMER_TABLE_NAME,
+                CUSTOMERS_TABLE_COLUMNS,
+                DBUtils.CUSTOMER_ID + " = " + id,
+                null, null, null, null);
+        cursor.moveToFirst();
+        Customer customer = parseCustomer(cursor);
         cursor.close();
 
         return customer;
     }
 
-    public int deleteCustomer(int nCustomerID){
+    public int deleteCustomer(int nCustomerID) {
         return database.delete(DBUtils.CUSTOMER_TABLE_NAME, DBUtils.CUSTOMER_ID + " = " + nCustomerID, null);
     }
 }
